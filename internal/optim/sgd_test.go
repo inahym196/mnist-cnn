@@ -37,3 +37,37 @@ func TestSGDPreservesGradient(t *testing.T) {
 		t.Fatalf("gradient was modified: %v", p.Grad[0])
 	}
 }
+
+func TestSDGWithLinear(t *testing.T) {
+	l := nn.NewLinear(1, 1)
+	sgd := NewSGD(0.1)
+
+	x := []float64{1}
+
+	loss := func(y float64) float64 {
+		return 0.5 * math.Pow(y-1.0, 2)
+	}
+
+	gradLoss := func(y float64) float64 {
+		return y - 1.0
+	}
+
+	y := l.Forward(x)[0]
+	before := loss(y)
+
+	l.Backward([]float64{gradLoss(y)})
+	sgd.Step(l.Parameters()...)
+
+	y = l.Forward(x)[0]
+	after := loss(y)
+
+	params := l.Parameters()
+	t.Logf("x,w,b,y:=%v,%v,%v,%v", x[0], params[0].Value[0], params[1].Value[0], y)
+	if math.Abs(after-0.32) > 1e-12 {
+		t.Fatalf("unexpected loss: got %v, want 0.32", after)
+	}
+
+	if after >= before {
+		t.Fatalf("loss did not decrease: before=%v, after=%v", before, after)
+	}
+}
