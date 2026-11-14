@@ -9,11 +9,11 @@ import (
 func TestLinearForward(t *testing.T) {
 	l := NewLinear(2, 2)
 
-	l.weights = []float64{
+	l.weights.Value = []float64{
 		1, 2,
 		3, 4,
 	}
-	l.biases = []float64{5, 6}
+	l.biases.Value = []float64{5, 6}
 
 	got := l.Forward([]float64{2, 3})
 	want := []float64{13, 24}
@@ -26,12 +26,12 @@ func TestLinearForward(t *testing.T) {
 func TestLinearForwardNonSquare(t *testing.T) {
 	l := NewLinear(2, 3)
 
-	l.weights = []float64{
+	l.weights.Value = []float64{
 		1, 0,
 		0, 1,
 		1, 1,
 	}
-	l.biases = []float64{0, 0, 0}
+	l.biases.Value = []float64{0, 0, 0}
 
 	got := l.Forward([]float64{2, 3})
 	want := []float64{2, 3, 5}
@@ -43,7 +43,7 @@ func TestLinearForwardNonSquare(t *testing.T) {
 
 func TestLinearBackward(t *testing.T) {
 	l := NewLinear(2, 2)
-	l.weights = []float64{
+	l.weights.Value = []float64{
 		1, 2,
 		3, 4,
 	}
@@ -55,12 +55,12 @@ func TestLinearBackward(t *testing.T) {
 		t.Errorf("gradInput: got %v, want %v", gotInput, want)
 	}
 
-	if want := []float64{10, 15, 12, 18}; !slices.Equal(l.gradWeights, want) {
-		t.Errorf("gradWeights: got %v, want %v", l.gradWeights, want)
+	if want := []float64{10, 15, 12, 18}; !slices.Equal(l.weights.Grad, want) {
+		t.Errorf("gradWeights: got %v, want %v", l.weights.Grad, want)
 	}
 
-	if want := []float64{5, 6}; !slices.Equal(l.gradBiases, want) {
-		t.Errorf("gradBiases: got %v, want %v", l.gradBiases, want)
+	if want := []float64{5, 6}; !slices.Equal(l.biases.Grad, want) {
+		t.Errorf("gradBiases: got %v, want %v", l.biases.Grad, want)
 	}
 }
 
@@ -73,29 +73,29 @@ func TestLinearGradientAccumulation(t *testing.T) {
 	l.Forward([]float64{1, 5})
 	l.Backward([]float64{2})
 
-	if want := []float64{10, 22}; !slices.Equal(l.gradWeights, want) {
-		t.Errorf("gradWeights: got %v, want %v", l.gradWeights, want)
+	if want := []float64{10, 22}; !slices.Equal(l.weights.Grad, want) {
+		t.Errorf("gradWeights: got %v, want %v", l.weights.Grad, want)
 	}
 
-	if want := []float64{6}; !slices.Equal(l.gradBiases, want) {
-		t.Errorf("gradBiases: got %v, want %v", l.gradBiases, want)
+	if want := []float64{6}; !slices.Equal(l.biases.Grad, want) {
+		t.Errorf("gradBiases: got %v, want %v", l.biases.Grad, want)
 	}
 
 	l.ZeroGrad()
 
-	if want := []float64{0, 0}; !slices.Equal(l.gradWeights, want) {
-		t.Errorf("gradWeights after reset: got %v", l.gradWeights)
+	if want := []float64{0, 0}; !slices.Equal(l.weights.Grad, want) {
+		t.Errorf("gradWeights after reset: got %v", l.weights.Grad)
 	}
 
-	if want := []float64{0}; !slices.Equal(l.gradBiases, want) {
-		t.Errorf("gradBiases after reset: got %v", l.gradBiases)
+	if want := []float64{0}; !slices.Equal(l.biases.Grad, want) {
+		t.Errorf("gradBiases after reset: got %v", l.biases.Grad)
 	}
 }
 
 func TestLinearBackwardNumericalGradient(t *testing.T) {
 	l := NewLinear(2, 2)
-	l.weights = []float64{1, 2, 3, 4}
-	l.biases = []float64{7, 8}
+	l.weights.Value = []float64{1, 2, 3, 4}
+	l.biases.Value = []float64{7, 8}
 
 	x := []float64{2, 3}
 	g := []float64{5, 6}
@@ -112,40 +112,40 @@ func TestLinearBackwardNumericalGradient(t *testing.T) {
 	}
 
 	// 重みの勾配
-	for i := range l.weights {
-		original := l.weights[i]
+	for i := range l.weights.Value {
+		original := l.weights.Value[i]
 
-		l.weights[i] = original + eps
+		l.weights.Value[i] = original + eps
 		plus := loss()
 
-		l.weights[i] = original - eps
+		l.weights.Value[i] = original - eps
 		minus := loss()
 
-		l.weights[i] = original
+		l.weights.Value[i] = original
 
 		numeric := (plus - minus) / (2 * eps)
-		if math.Abs(numeric-l.gradWeights[i]) > tolerance {
+		if math.Abs(numeric-l.weights.Grad[i]) > tolerance {
 			t.Errorf("weight[%d]: got %v, numeric %v",
-				i, l.gradWeights[i], numeric)
+				i, l.weights.Grad[i], numeric)
 		}
 	}
 
 	// バイアスの勾配
-	for i := range l.biases {
-		original := l.biases[i]
+	for i := range l.biases.Value {
+		original := l.biases.Value[i]
 
-		l.biases[i] = original + eps
+		l.biases.Value[i] = original + eps
 		plus := loss()
 
-		l.biases[i] = original - eps
+		l.biases.Value[i] = original - eps
 		minus := loss()
 
-		l.biases[i] = original
+		l.biases.Value[i] = original
 
 		numeric := (plus - minus) / (2 * eps)
-		if math.Abs(numeric-l.gradBiases[i]) > tolerance {
+		if math.Abs(numeric-l.biases.Grad[i]) > tolerance {
 			t.Errorf("bias[%d]: got %v, numeric %v",
-				i, l.gradBiases[i], numeric)
+				i, l.biases.Grad[i], numeric)
 		}
 	}
 
