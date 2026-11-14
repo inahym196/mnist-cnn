@@ -61,8 +61,6 @@ func TestSDGWithLinear(t *testing.T) {
 	y = l.Forward(x)[0]
 	after := loss(y)
 
-	params := l.Parameters()
-	t.Logf("x,w,b,y:=%v,%v,%v,%v", x[0], params[0].Value[0], params[1].Value[0], y)
 	if math.Abs(after-0.32) > 1e-12 {
 		t.Fatalf("unexpected loss: got %v, want 0.32", after)
 	}

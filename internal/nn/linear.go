@@ -1,6 +1,9 @@
 package nn
 
-import "slices"
+import (
+	"math/rand"
+	"slices"
+)
 
 type Linear struct {
 	in, out int
@@ -60,4 +63,9 @@ func (l *Linear) ZeroGrad() {
 
 func (l *Linear) Parameters() []*Parameter {
 	return []*Parameter{&l.weights, &l.biases}
+}
+
+func (l *Linear) InitHe(rng *rand.Rand) {
+	HeInit(&l.weights, l.in, rng)
+	clear(l.biases.Value)
 }
