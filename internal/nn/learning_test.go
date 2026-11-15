@@ -1,6 +1,7 @@
 package nn_test
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -97,6 +98,11 @@ func TestLearnXOR(t *testing.T) {
 			logWeights(t, "L1", l1, 2, h)
 			t.Logf("L2 biases: %+.4f", l2.Parameters()[1].Value)
 			logWeights(t, "L2", l2, h, 2)
+
+			path := fmt.Sprintf("xor_epoch_%05d.png", epoch)
+			if err := saveDecisionBoundary(path, l1, relu, l2); err != nil {
+				t.Fatal(err)
+			}
 		}
 		if epoch == 5000 {
 
