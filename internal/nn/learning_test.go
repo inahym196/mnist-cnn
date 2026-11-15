@@ -6,9 +6,11 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/inahym196/mnist-cnn/internal/analysis"
 	"github.com/inahym196/mnist-cnn/internal/loss"
 	"github.com/inahym196/mnist-cnn/internal/nn"
 	"github.com/inahym196/mnist-cnn/internal/optim"
+	"github.com/inahym196/mnist-cnn/internal/visualize"
 )
 
 func weightNorm(l *nn.Linear) float64 {
@@ -64,7 +66,7 @@ func logWeights(t *testing.T, name string, l *nn.Linear, in, out int) {
 
 func TestLearnXOR(t *testing.T) {
 
-	h := 8
+	in, h, out := 2, 8, 2
 	samples := []Sample{
 		{[]float64{0, 0}, 0},
 		{[]float64{0, 1}, 1},
@@ -74,16 +76,17 @@ func TestLearnXOR(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(42))
 
-	l1 := nn.NewLinear(2, h)
+	l1 := nn.NewLinear(in, h)
 	relu := nn.NewReLU()
-	l2 := nn.NewLinear(h, 2)
+	l2 := nn.NewLinear(h, out)
 
 	l1.InitHe(rng)
 	l2.InitHe(rng)
 
 	sgd := optim.NewSGD(0.05)
 
-	for epoch := range 5001 {
+	lastEpoch := 5000
+	for epoch := range lastEpoch + 1 {
 		if epoch%2500 == 0 {
 			avgLoss, accuracy := evaluteXOR(samples, l1, relu, l2)
 			t.Logf(
@@ -104,9 +107,22 @@ func TestLearnXOR(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		if epoch == 5000 {
+		if epoch == lastEpoch {
 
-			for _, sample := range samples {
+			params := l1.Parameters()
+			weights := params[0].Value
+			var edges []analysis.Edge
+			for j := range 2 {
+				for i := range 2 {
+					edges = append(edges, analysis.Edge{
+						From:   i,
+						To:     2 + j,
+						Weight: weights[j*2+i],
+					})
+				}
+			}
+
+			for i, sample := range samples {
 				h := l1.Forward(sample.x)
 				a := relu.Forward(h)
 				logits := l2.Forward(a)
@@ -118,6 +134,12 @@ func TestLearnXOR(t *testing.T) {
 					logits,
 					logits[1]-logits[0],
 				)
+				snapshot := analysis.Capture(sample.x, l1, relu, l2)
+				t.Log("\n" + analysis.FormatSnapshot(snapshot))
+				path := fmt.Sprintf("xor_%d.svg", i)
+				if err := visualize.SaveSVG(path, snapshot, visualize.SVGOptions{}); err != nil {
+					t.Fatal(err)
+				}
 			}
 			break
 		}
