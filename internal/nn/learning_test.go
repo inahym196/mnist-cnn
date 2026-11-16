@@ -2,7 +2,6 @@ package nn_test
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"testing"
 
@@ -12,16 +11,6 @@ import (
 	"github.com/inahym196/mnist-cnn/internal/optim"
 	"github.com/inahym196/mnist-cnn/internal/visualize"
 )
-
-func weightNorm(l *nn.Linear) float64 {
-	weights := l.Parameters()[0].Value
-
-	var sum float64
-	for _, w := range weights {
-		sum += w * w
-	}
-	return math.Sqrt(sum)
-}
 
 type Sample struct {
 	x      []float64
@@ -52,21 +41,9 @@ func evaluteXOR(samples []Sample, l1 *nn.Linear, relu *nn.ReLU, l2 *nn.Linear) (
 	return totalLoss / float64(len(samples)), float64(correct) / float64(len(samples))
 }
 
-func logWeights(t *testing.T, name string, l *nn.Linear, in, out int) {
-	t.Helper()
-
-	weights := l.Parameters()[0].Value
-
-	t.Logf("%s weights:", name)
-	for j := range out {
-		row := weights[j*in : (j+1)*in]
-		t.Logf("  neuron[%d]: %+.4f", j, row)
-	}
-}
-
 func TestLearnXOR(t *testing.T) {
 
-	in, h, out := 2, 8, 2
+	in, h, out := 2, 2, 2
 	samples := []Sample{
 		{[]float64{0, 0}, 0},
 		{[]float64{0, 1}, 1},
@@ -74,7 +51,7 @@ func TestLearnXOR(t *testing.T) {
 		{[]float64{1, 1}, 0},
 	}
 
-	rng := rand.New(rand.NewSource(42))
+	rng := rand.New(rand.NewSource(2))
 
 	l1 := nn.NewLinear(in, h)
 	relu := nn.NewReLU()
@@ -87,20 +64,9 @@ func TestLearnXOR(t *testing.T) {
 
 	lastEpoch := 5000
 	for epoch := range lastEpoch + 1 {
-		if epoch%2500 == 0 {
+		if epoch == lastEpoch {
 			avgLoss, accuracy := evaluteXOR(samples, l1, relu, l2)
-			t.Logf(
-				"epoch=%4d loss=%.6f accuracy=%3.0f%% L1_norm=%.4f L2_norm=%.4f",
-				epoch,
-				avgLoss,
-				accuracy*100,
-				weightNorm(l1),
-				weightNorm(l2),
-			)
-			t.Logf("L1 biases: %+.4f", l1.Parameters()[1].Value)
-			logWeights(t, "L1", l1, 2, h)
-			t.Logf("L2 biases: %+.4f", l2.Parameters()[1].Value)
-			logWeights(t, "L2", l2, h, 2)
+			t.Logf("epoch=%4d loss=%.6f accuracy=%3.0f%%", epoch, avgLoss, accuracy*100)
 
 			path := fmt.Sprintf("xor_epoch_%05d.png", epoch)
 			if err := saveDecisionBoundary(path, l1, relu, l2); err != nil {
@@ -109,35 +75,21 @@ func TestLearnXOR(t *testing.T) {
 		}
 		if epoch == lastEpoch {
 
-			params := l1.Parameters()
-			weights := params[0].Value
-			var edges []analysis.Edge
-			for j := range 2 {
-				for i := range 2 {
-					edges = append(edges, analysis.Edge{
-						From:   i,
-						To:     2 + j,
-						Weight: weights[j*2+i],
-					})
-				}
+			model, err := analysis.CaptureModel(l1, relu, l2)
+			if err != nil {
+				t.Fatal(err)
 			}
 
-			for i, sample := range samples {
-				h := l1.Forward(sample.x)
-				a := relu.Forward(h)
-				logits := l2.Forward(a)
+			t.Log("\n" + analysis.FormatModel(model))
 
-				t.Logf(
-					"x=%v hidden=%+.3f logits=%+.3f delta=%.3f",
-					sample.x,
-					a,
-					logits,
-					logits[1]-logits[0],
-				)
-				snapshot := analysis.Capture(sample.x, l1, relu, l2)
-				t.Log("\n" + analysis.FormatSnapshot(snapshot))
+			for i, sample := range samples {
+				activation, err := analysis.CaptureActivation(sample.x, l1, relu, l2)
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Log("\n" + analysis.FormatActivation(model, activation))
 				path := fmt.Sprintf("xor_%d.svg", i)
-				if err := visualize.SaveSVG(path, snapshot, visualize.SVGOptions{}); err != nil {
+				if err := visualize.SaveActivationSVG(path, model, activation, visualize.SVGOptions{}); err != nil {
 					t.Fatal(err)
 				}
 			}

@@ -2,7 +2,6 @@ package analysis
 
 type Node struct {
 	Name    string
-	Value   float64
 	Bias    float64
 	HasBias bool
 }
@@ -17,9 +16,13 @@ type LayerSnapshot struct {
 	Nodes []Node
 }
 
-type Snapshot struct {
+type ModelSnapshot struct {
 	Layers []LayerSnapshot
 	Edges  []Edge
+}
+
+type ActivationSnapshot struct {
+	Values [][]float64
 }
 
 type Metrics struct {
