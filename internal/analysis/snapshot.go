@@ -24,9 +24,3 @@ type ModelSnapshot struct {
 type ActivationSnapshot struct {
 	Values [][]float64
 }
-
-type Metrics struct {
-	Epoch    int
-	Loss     float64
-	Accuracy float64
-}

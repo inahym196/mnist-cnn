@@ -5,10 +5,6 @@ import (
 	"strings"
 )
 
-func FormatMetrics(m Metrics) string {
-	return fmt.Sprintf("epoch=%4d loss=%.6f accuracy=%3.0f%%", m.Epoch, m.Loss, m.Accuracy*100)
-}
-
 func FormatModel(m ModelSnapshot) string {
 	var b strings.Builder
 

@@ -6,6 +6,8 @@ import (
 	"io"
 	"math"
 	"os"
+
+	"github.com/inahym196/mnist-cnn/internal/analysis"
 )
 
 const nodeRadius = 12.0
@@ -120,4 +122,16 @@ func SaveSVG(path string, scene Scene) error {
 	defer f.Close()
 
 	return WriteSVG(f, scene)
+}
+
+func SaveActivationSVG(
+	path string,
+	model analysis.ModelSnapshot,
+	activation analysis.ActivationSnapshot,
+	opts SVGOptions) error {
+	scene, err := BuildScene(model, activation, opts.Layout)
+	if err != nil {
+		return err
+	}
+	return SaveSVG(path, scene)
 }
