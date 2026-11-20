@@ -7,7 +7,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/inahym196/mnist-cnn/internal/analysis"
+	"github.com/inahym196/mnist-cnn/examples/mlp/analysis"
 )
 
 const nodeRadius = 12.0

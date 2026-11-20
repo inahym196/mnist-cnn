@@ -9,11 +9,11 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/inahym196/mnist-cnn/internal/analysis"
+	"github.com/inahym196/mnist-cnn/examples/mlp/analysis"
+	"github.com/inahym196/mnist-cnn/examples/mlp/visualize"
 	"github.com/inahym196/mnist-cnn/internal/loss"
 	"github.com/inahym196/mnist-cnn/internal/nn"
 	"github.com/inahym196/mnist-cnn/internal/optim"
-	"github.com/inahym196/mnist-cnn/internal/visualize"
 )
 
 type Sample struct {
@@ -82,14 +82,14 @@ func main() {
 				log.Fatal(err)
 			}
 
-			fmt.Print("\n" + analysis.FormatModel(model))
+			fmt.Print("\n" + visualize.FormatModel(model))
 
 			for i, sample := range samples {
 				activation, err := analysis.CaptureActivation(sample.x, l1, relu, l2)
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Print("\n" + analysis.FormatActivation(model, activation))
+				fmt.Print("\n" + visualize.FormatActivation(model, activation))
 				path := fmt.Sprintf("xor_%d.svg", i)
 				if err := visualize.SaveActivationSVG(path, model, activation, visualize.SVGOptions{}); err != nil {
 					log.Fatal(err)

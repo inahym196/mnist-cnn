@@ -1,11 +1,13 @@
-package analysis
+package visualize
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/inahym196/mnist-cnn/examples/mlp/analysis"
 )
 
-func FormatModel(m ModelSnapshot) string {
+func FormatModel(m analysis.ModelSnapshot) string {
 	var b strings.Builder
 
 	offset := 0
@@ -28,7 +30,7 @@ func FormatModel(m ModelSnapshot) string {
 	return b.String()
 }
 
-func FormatActivation(model ModelSnapshot, a ActivationSnapshot) string {
+func FormatActivation(model analysis.ModelSnapshot, a analysis.ActivationSnapshot) string {
 	var b strings.Builder
 
 	for li, layer := range model.Layers {
